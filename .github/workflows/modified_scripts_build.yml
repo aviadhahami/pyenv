@@ -4,7 +4,7 @@ jobs:
   discover_modified_scripts:
     runs-on: ubuntu-latest
     outputs:
-      versions: ${{steps.modified-versions.outputs.versions}}
+      versions: printf '%q' "${{steps.modified-versions.outputs.versions}}" | sed 's/[^a-zA-Z0-9.-]/_/gi'
     steps:
       - uses: actions/checkout@v3
       - run: git fetch origin "$GITHUB_BASE_REF"
@@ -19,28 +19,32 @@ jobs:
           echo "versions<<$EOF" >> $GITHUB_ENV;
           echo "$versions" >> $GITHUB_ENV;
           echo "$EOF" >> $GITHUB_ENV;
-      - name: Set up pyenv
-        run: |
-          #envvars
-          export PYENV_ROOT="$GITHUB_WORKSPACE"
-          echo "PYENV_ROOT=$PYENV_ROOT" >> $GITHUB_ENV
-          echo "$PYENV_ROOT/shims:$PYENV_ROOT/bin" >> $GITHUB_PATH    
-      - name: Verify versions
-        run: |
-          # Get all pyenv python versions
-          pyenv install --list > valid-versions;
-          # for every version in env.versions, check if it exists in valid-versions
-          # if it does -> output it
-          for version in $(echo "${{ env.versions }}" | jq -r '.[]'); do
-            if grep -q "^ *$version$" valid-versions; then
-              echo "$version";
-            fi;
-          done > verified-versions;
-          # Overwrite env.versions with verified-versions
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64);
-          echo "versions<<$EOF" >> $GITHUB_ENV;
-          cat verified-versions >> $GITHUB_ENV;
-          echo "$EOF" >> $GITHUB_ENV;
+      # - name: Set up pyenv
+      #   run: |
+      #     #envvars
+      #     export PYENV_ROOT="$GITHUB_WORKSPACE"
+      #     echo "PYENV_ROOT=$PYENV_ROOT" >> $GITHUB_ENV
+      #     echo "$PYENV_ROOT/shims:$PYENV_ROOT/bin" >> $GITHUB_PATH    
+      # - name: Verify versions
+      #   run: |
+      #     # Get all pyenv python versions
+      #     pyenv install --list > valid-versions;
+      #     # for every version in env.versions, check if it exists in valid-versions
+      #     # if it does -> output it
+      #     # Loop through each version using a safer method
+      #     while IFS= read -r version; do
+      #       if grep -q "^ *${version}$" <<< "$valid_versions"; then
+      #         echo "$version"
+      #       fi
+      #     done <<< "$versions" > verified-versions
+
+      #     cat verified-versions;
+      #     echo "XXX";
+      #     # Overwrite env.versions with verified-versions
+      #     EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64);
+      #     echo "versions<<$EOF" >> $GITHUB_ENV;
+      #     cat verified-versions >> $GITHUB_ENV;
+          # echo "$EOF" >> $GITHUB_ENV;
 
       - id: modified-versions
         run: |
