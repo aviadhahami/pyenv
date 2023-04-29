@@ -19,7 +19,14 @@ jobs:
           echo "versions<<$EOF" >> $GITHUB_ENV;
           echo "$versions" >> $GITHUB_ENV;
           echo "$EOF" >> $GITHUB_ENV;
-      - run: |
+      - name: Set up pyenv
+        run: |
+          #envvars
+          export PYENV_ROOT="$GITHUB_WORKSPACE"
+          echo "PYENV_ROOT=$PYENV_ROOT" >> $GITHUB_ENV
+          echo "$PYENV_ROOT/shims:$PYENV_ROOT/bin" >> $GITHUB_PATH    
+      - name: Verify versions
+        run: |
           # Get all pyenv python versions
           pyenv install --list > valid-versions;
           # for every version in env.versions, check if it exists in valid-versions
