@@ -19,6 +19,22 @@ jobs:
           echo "versions<<$EOF" >> $GITHUB_ENV;
           echo "$versions" >> $GITHUB_ENV;
           echo "$EOF" >> $GITHUB_ENV;
+      - run: |
+          # Get all pyenv python versions
+          pyenv install --list > valid-versions;
+          # for every version in env.versions, check if it exists in valid-versions
+          # if it does -> output it
+          for version in $(echo "${{ env.versions }}" | jq -r '.[]'); do
+            if grep -q "^ *$version$" valid-versions; then
+              echo "$version";
+            fi;
+          done > verified-versions;
+          # Overwrite env.versions with verified-versions
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64);
+          echo "versions<<$EOF" >> $GITHUB_ENV;
+          cat verified-versions >> $GITHUB_ENV;
+          echo "$EOF" >> $GITHUB_ENV;
+
       - id: modified-versions
         run: |
           echo -n "::set-output name=versions::"
